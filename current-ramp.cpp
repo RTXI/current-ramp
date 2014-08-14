@@ -66,25 +66,26 @@ static DefaultGUIModel::variable_t vars[] = {
     {
         "File Prefix",
         "",
-        DefaultGUIModel::PARAMETER //| DefaultGUIModel::DOUBLE,
+        DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
     },
     {
         "File Info",
         "",
-        DefaultGUIModel::PARAMETER //| DefaultGUIModel::DOUBLE,
+        DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
     },
 };
 
 static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 
 Iramp::Iramp(void)
-    : DefaultGUIModel("Iramp",::vars,::num_vars), dt(RT::System::getInstance()->getPeriod()*1e-6), maxt(30.0), Istart(0.0), Iend(100.0), active(0), acquire(0), cellnum(1), prefix("Iramp"), info("n/a") {
+    : DefaultGUIModel("Current Ramp",::vars,::num_vars), dt(RT::System::getInstance()->getPeriod()*1e-6), maxt(30.0), Istart(0.0), Iend(100.0), active(0), acquire(0), cellnum(1), prefix("Iramp"), info("n/a") {
 
 
         newdata.push_back(0);
         newdata.push_back(0);
         newdata.push_back(0);
 
+        DefaultGUIModel::createGUI(vars, num_vars);
         update(INIT);
         refresh();
     }
@@ -158,8 +159,8 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag)
 
             setParameter("Acquire?",acquire);
             setParameter("Cell (#)",cellnum);
-            setParameter("File Prefix", prefix);
-            setParameter("File Info", info);
+            setComment("File Prefix", QString::fromStdString(prefix));
+            setComment("File Info", QString::fromStdString(info));
 
             break;
         case MODIFY:
@@ -170,8 +171,8 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag)
 
             acquire = getParameter("Acquire?").toInt();
             cellnum = getParameter("Cell (#)").toInt();
-            prefix = getParameter("File Prefix").data();
-            info = getParameter("File Info").data();
+            prefix = getComment("File Prefix").toStdString();
+            info = getComment("File Info").toStdString();
 
             //Reset ramp
             Iout = Istart*active;
