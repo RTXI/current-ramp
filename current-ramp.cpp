@@ -136,8 +136,6 @@ void Iramp::execute(void) {
 	output(0) = Iout*1e-12;
 }
 
-
-
 void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 
 	switch(flag) {
