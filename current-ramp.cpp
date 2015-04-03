@@ -19,182 +19,170 @@
 #include <current-ramp.h>
 
 extern "C" Plugin::Object *createRTXIPlugin(void) {
-    return new Iramp();
+	return new Iramp();
 }
 
 static DefaultGUIModel::variable_t vars[] = {
-    {
-        "Vin",
-        "",
-        DefaultGUIModel::INPUT,
-    },
-    {
-        "Iout",
-        "",
-        DefaultGUIModel::OUTPUT,
-    },
-    {
-        "Start Amp (pA)",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
-    },
-    {
-        "End Amp (pA)",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
-    },
-    {
-        "Time (sec)",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
-    },
-    {
-        "Active?",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
-    },
-    {
-        "Acquire?",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
-    },
-    {
-        "Cell (#)",
-        "",
-        DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
-    },
-    {
-        "File Prefix",
-        "",
-        DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
-    },
-    {
-        "File Info",
-        "",
-        DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
-    },
+	{
+		"Vin",
+		"",
+		DefaultGUIModel::INPUT,
+	},
+	{
+		"Iout",
+		"",
+		DefaultGUIModel::OUTPUT,
+	},
+	{
+		"Start Amp (pA)",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
+	},
+	{
+		"End Amp (pA)",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
+	},
+	{
+		"Time (sec)",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
+	},
+	{
+		"Active?",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
+	},
+	{
+		"Acquire?",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
+	},
+	{
+		"Cell (#)",
+		"",
+		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
+	},
+	{
+		"File Prefix",
+		"",
+		DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
+	},
+	{
+		"File Info",
+		"",
+		DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
+	},
 };
 
 static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 
-Iramp::Iramp(void)
-    : DefaultGUIModel("Current Ramp",::vars,::num_vars), dt(RT::System::getInstance()->getPeriod()*1e-6), maxt(30.0), Istart(0.0), Iend(100.0), active(0), acquire(0), cellnum(1), prefix("Iramp"), info("n/a") {
+Iramp::Iramp(void) : DefaultGUIModel("Current Ramp",::vars,::num_vars), dt(RT::System::getInstance()->getPeriod()*1e-6), maxt(30.0), Istart(0.0), Iend(100.0), active(0), acquire(0), cellnum(1), prefix("Iramp"), info("n/a") {
 
+	newdata.push_back(0);
+	newdata.push_back(0);
+	newdata.push_back(0);
 
-        newdata.push_back(0);
-        newdata.push_back(0);
-        newdata.push_back(0);
-
-        DefaultGUIModel::createGUI(vars, num_vars);
-        update(INIT);
-        refresh();
-    }
-
-
-
+	DefaultGUIModel::createGUI(vars, num_vars);
+	update(INIT);
+	refresh();
+	QTimer::singleShot(0, this, SLOT(resizeMe()));
+}
 
 Iramp::~Iramp(void) {}
 
-
-
-
 void Iramp::execute(void) {
-    V = input(0);
+	V = input(0);
 
+	if (active) {
+		if (!peaked) {
+			if (Iout<Iend) {
+				Iout+=rate*dt/1000;
+			} else {
+				Iout-=rate*dt/1000;
+				peaked = 1;
+			}
+		} else {
+			if (Iout >= Istart-EPS) {
+				Iout-=rate*dt/1000;
+			} else {
+				Iout = 0;
+				active = 0;
+				peaked = 0;
+				setParameter("Active?", active);
+				refresh();
+			}
+		}
+	}
 
-    if (active) {
-        if (!peaked) {
-            if (Iout<Iend) {
-                Iout+=rate*dt/1000;
-            } else {
-                Iout-=rate*dt/1000;
-                peaked = 1;
-            }
-        } else {
-            if (Iout >= Istart-EPS) {
-                Iout-=rate*dt/1000;
-            } else {
-                Iout = 0;
-                active = 0;
-                peaked = 0;
-                setParameter("Active?", active);
-                refresh();
-            }
-        }
-    }
+	//Do data logging and data writing
+	if (acquire && active) {
+		newdata[0] = tcnt;
+		newdata[1] = V;
+		newdata[2] = Iout*1e-12;
+		data.insertdata(newdata);
+		tcnt+=dt/1000;
+	}
+	else if (acquire && !active) {
+		data.writebuffer(prefix, info);
+		data.resetbuffer();
 
-    //Do data logging and data writing
-    if (acquire && active) {
-        newdata[0] = tcnt;
-        newdata[1] = V;
-        newdata[2] = Iout*1e-12;
-        data.insertdata(newdata);
-        tcnt+=dt/1000;
-    }
-    else if (acquire && !active) {
-        data.writebuffer(prefix, info);
-        data.resetbuffer();
+		tcnt = 0;
+		acquire = 0;
+		setParameter("Acquire?", acquire);
+		refresh();
+	}
 
-        tcnt = 0;
-        acquire = 0;
-        setParameter("Acquire?", acquire);
-        refresh();
-    }
-
-
-    output(0) = Iout*1e-12;
+	output(0) = Iout*1e-12;
 }
 
 
 
-void Iramp::update(DefaultGUIModel::update_flags_t flag) 
-{
+void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 
-    switch(flag) {
-        case INIT:
-            setParameter("Time (sec)",maxt);
-            setParameter("Start Amp (pA)",Istart);
-            setParameter("End Amp (pA)",Iend);
-            setParameter("Active?",active);
+	switch(flag) {
+	case INIT:
+		setParameter("Time (sec)",maxt);
+		setParameter("Start Amp (pA)",Istart);
+		setParameter("End Amp (pA)",Iend);
+		setParameter("Active?",active);
 
-            setParameter("Acquire?",acquire);
-            setParameter("Cell (#)",cellnum);
-            setComment("File Prefix", QString::fromStdString(prefix));
-            setComment("File Info", QString::fromStdString(info));
+		setParameter("Acquire?",acquire);
+		setParameter("Cell (#)",cellnum);
+		setComment("File Prefix", QString::fromStdString(prefix));
+		setComment("File Info", QString::fromStdString(info));
+		break;
 
-            break;
-        case MODIFY:
-            maxt   = getParameter("Time (sec)").toDouble();
-            Istart = getParameter("Start Amp (pA)").toDouble();
-            Iend   = getParameter("End Amp (pA)").toDouble();
-            active = getParameter("Active?").toInt();
+	case MODIFY:
+		maxt   = getParameter("Time (sec)").toDouble();
+		Istart = getParameter("Start Amp (pA)").toDouble();
+		Iend   = getParameter("End Amp (pA)").toDouble();
+		active = getParameter("Active?").toInt();
 
-            acquire = getParameter("Acquire?").toInt();
-            cellnum = getParameter("Cell (#)").toInt();
-            prefix = getComment("File Prefix").toStdString();
-            info = getComment("File Info").toStdString();
+		acquire = getParameter("Acquire?").toInt();
+		cellnum = getParameter("Cell (#)").toInt();
+		prefix = getComment("File Prefix").toStdString();
+		info = getComment("File Info").toStdString();
 
-            //Reset ramp
-            Iout = Istart*active;
+		//Reset ramp
+		Iout = Istart*active;
 
-            peaked = 0;
-            rate = (Iend-Istart)/maxt/2; //In (pA/sec)
-            tcnt = 0;
-            //Reset data saving stuff
-            data.newcell(cellnum);
-            data.resetbuffer();
+		peaked = 0;
+		rate = (Iend-Istart)/maxt/2; //In (pA/sec)
+		tcnt = 0;
+		
+		//Reset data saving stuff
+		data.newcell(cellnum);
+		data.resetbuffer();
+		break;
 
-            break;
-        case PERIOD:
-            dt = RT::System::getInstance()->getPeriod()*1e-6;
-        case PAUSE:
-            output(0) = 0.0;
-        default:
-            break;
-    }
+	case PERIOD:
+		dt = RT::System::getInstance()->getPeriod()*1e-6;
 
+	case PAUSE:
+		output(0) = 0.0;
 
+	default:
+		break;
+	}
 }
-
-
-

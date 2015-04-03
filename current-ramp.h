@@ -20,39 +20,33 @@
 #include <DataLogger.cpp>
 #include <string>
 
-class Iramp : public DefaultGUIModel
-{
+class Iramp : public DefaultGUIModel {
 
-public:
+	public:
+		Iramp(void);
+		virtual ~Iramp(void);
+		virtual void execute(void);
 
-    Iramp(void);
-    virtual ~Iramp(void);
-    virtual void execute(void);
+	protected:
+		virtual void update(DefaultGUIModel::update_flags_t);
 
-protected:
+	private:
+#define EPS 1e-9
+		double V, Iout;
 
-    virtual void update(DefaultGUIModel::update_flags_t);
+		double dt;
+		double rate;
+		double maxt;
+		double Istart, Iend;
 
-private:
-    #define EPS 1e-9
-    double V, Iout;
+		int active;
+		int peaked;
 
-    double dt;
-    double rate;
-    double maxt;
-    double Istart, Iend;
-
-    int active;
-    int peaked;
-    
-
-    
-    // DataLogger
-    DataLogger data;
-    int acquire;
-    double tcnt;
-    int cellnum;
-    string prefix, info;
-    vector<double> newdata;
-    
+		// DataLogger
+		DataLogger data;
+		int acquire;
+		double tcnt;
+		int cellnum;
+		string prefix, info;
+		vector<double> newdata;
 };

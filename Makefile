@@ -2,7 +2,7 @@ PLUGIN_NAME = current_ramp
 
 HEADERS = current-ramp.h
 
-SOURCES = current-ramp.cpp \
+SOURCES = current-ramp.cpp 
 
 LIBS =
 
