@@ -1,8 +1,8 @@
-PLUGIN_NAME = current_ramp
+PLUGIN_NAME = Iramp
 
-HEADERS = current-ramp.h
+HEADERS = Iramp.h
 
-SOURCES = current-ramp.cpp 
+SOURCES = Iramp.cpp 
 
 LIBS =
 
