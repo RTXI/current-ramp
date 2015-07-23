@@ -63,6 +63,21 @@ static DefaultGUIModel::variable_t vars[] = {
 		"",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
 	},
+	{
+		"tcnt",
+		"",
+		DefaultGUIModel::STATE,
+	},
+	{
+		"V",
+		"",
+		DefaultGUIModel::STATE,
+	},
+	{
+		"Iout (pA)",
+		"",
+		DefaultGUIModel::STATE,
+	},
 /*
 	{
 		"File Prefix",
@@ -115,8 +130,8 @@ void Iramp::execute(void) {
 				Iout = 0;
 				active = 0;
 				peaked = 0;
-				setParameter("Active?", active);
-				refresh();
+//				setParameter("Active?", active);
+//				refresh();
 			}
 		}
 	}
@@ -135,8 +150,8 @@ void Iramp::execute(void) {
 
 		tcnt = 0;
 		acquire = 0;
-		setParameter("Acquire?", acquire);
-		refresh();
+//		setParameter("Acquire?", acquire);
+//		refresh();
 	}
 
 	output(0) = Iout*1e-12;
@@ -155,6 +170,10 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		setParameter("Cell (#)", cellnum);
 //		setComment("File Prefix", QString::fromStdString(prefix));
 //		setComment("File Info", QString::fromStdString(info));
+
+		setState("tcnt", tcnt);
+		setState("V", V);
+		setState("Iout", Iout);
 		break;
 
 	case MODIFY:
