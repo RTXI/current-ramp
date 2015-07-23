@@ -47,6 +47,6 @@ class Iramp : public DefaultGUIModel {
 		int acquire;
 		double tcnt;
 		int cellnum;
-		string prefix, info;
-		vector<double> newdata;
+//		string prefix, info;
+//		vector<double> newdata;
 };
