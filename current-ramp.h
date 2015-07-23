@@ -17,7 +17,7 @@
  */
 
 #include <default_gui_model.h>
-#include <DataLogger.cpp>
+//#include <DataLogger.cpp>
 #include <string>
 
 class Iramp : public DefaultGUIModel {
@@ -43,7 +43,7 @@ class Iramp : public DefaultGUIModel {
 		int peaked;
 
 		// DataLogger
-		DataLogger data;
+//		DataLogger data;
 		int acquire;
 		double tcnt;
 		int cellnum;
