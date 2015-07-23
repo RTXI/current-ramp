@@ -48,6 +48,7 @@ static DefaultGUIModel::variable_t vars[] = {
 		"",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
+/*
 	{
 		"Active?",
 		"",
@@ -63,6 +64,7 @@ static DefaultGUIModel::variable_t vars[] = {
 		"",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
 	},
+*/
 	{
 		"tcnt",
 		"",
@@ -124,7 +126,7 @@ void Iramp::execute(void) {
 				peaked = 1;
 			}
 		} else {
-			if (Iout >= Istart-EPS) {
+			if (Iout >= Istart-EPS) { //EPS is a macro defined in header
 				Iout-=rate*dt/1000;
 			} else {
 				Iout = 0;
@@ -167,7 +169,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		setParameter("Active?", active);
 
 		setParameter("Acquire?", acquire);
-		setParameter("Cell (#)", cellnum);
+//		setParameter("Cell (#)", cellnum);
 //		setComment("File Prefix", QString::fromStdString(prefix));
 //		setComment("File Info", QString::fromStdString(info));
 
@@ -183,7 +185,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		active = getParameter("Active?").toInt();
 
 		acquire = getParameter("Acquire?").toInt();
-		cellnum = getParameter("Cell (#)").toInt();
+//		cellnum = getParameter("Cell (#)").toInt();
 //		prefix = getComment("File Prefix").toStdString();
 //		info = getComment("File Info").toStdString();
 
