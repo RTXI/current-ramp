@@ -30,9 +30,6 @@ class Iramp : public DefaultGUIModel {
 		virtual void execute(void);
 		void customizeGUI(void);
 
-		void receiveEvent( const ::Event::Object *);
-		void receiveEventRT( const ::Event::Object *);
-
 	protected:
 		virtual void update(DefaultGUIModel::update_flags_t);
 

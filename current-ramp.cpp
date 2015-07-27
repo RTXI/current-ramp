@@ -254,13 +254,3 @@ void Iramp::toggleRamp(void) {
 void Iramp::rampTimerFunction(void) {
 	if ( done && rampButton->isChecked() ) rampButton->setChecked(false);
 }
-
-void Iramp::receiveEvent( const Event::Object *event ) {
-   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = 1;
-   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = 0;
-}
-
-void Iramp::receiveEventRT( const Event::Object *event ) {
-   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = 1;
-   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = 0;
-}
