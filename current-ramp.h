@@ -22,10 +22,16 @@
 
 class Iramp : public DefaultGUIModel {
 
+	Q_OBJECT
+
 	public:
 		Iramp(void);
 		virtual ~Iramp(void);
 		virtual void execute(void);
+		void customizeGUI(void);
+
+		void receiveEvent( const ::Event::Object *);
+		void receiveEventRT( const ::Event::Object *);
 
 	protected:
 		virtual void update(DefaultGUIModel::update_flags_t);
@@ -41,12 +47,35 @@ class Iramp : public DefaultGUIModel {
 
 		int active;
 		int peaked;
+		int acquire;
+//		bool active, peaked, acquire;
+		bool done;
+
+		QPushButton* rampButton;
+		QCheckBox* recordBox;
+		QTimer* rampCheckTimer;
 
 		// DataLogger
 //		DataLogger data;
-		int acquire;
 		double tcnt;
 		int cellnum;
 //		string prefix, info;
 //		vector<double> newdata;
+
+		friend class ToggleRampEvent;
+		class ToggleRampEvent : public RT::Event {
+			public:
+				ToggleRampEvent(Iramp*, bool, bool);
+				~ToggleRampEvent(void);
+				int callback(void);
+			private:
+				Iramp *parent;
+				bool ramping;
+				bool recording;
+		};
+
+	public slots:
+		void toggleRamp(void);
+		void rampTimerFunction(void);
+
 };
