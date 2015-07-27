@@ -151,8 +151,8 @@ void Iramp::execute(void) {
 		::Event::Manager::getInstance()->postEventRT(&event);
 	}
 
-	output(0) = Iout*1e-12;
 	Istate = Iout;
+	output(0) = Iout*1e-12;
 }
 
 void Iramp::update(DefaultGUIModel::update_flags_t flag) {
