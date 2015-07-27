@@ -71,7 +71,7 @@ static DefaultGUIModel::variable_t vars[] = {
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
 	{
-		"End Amp (pA)",
+		"Peak Amp (pA)",
 		"Peak current for the ramp (pA)",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
@@ -96,7 +96,7 @@ static DefaultGUIModel::variable_t vars[] = {
 		DefaultGUIModel::STATE,
 	},
 	{
-		"Time (s)",
+		"Elapsed Time (s)",
 		"Time (s)",
 		DefaultGUIModel::STATE,
 	},
@@ -159,10 +159,10 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 	case INIT:
 		setParameter("Time (s)", maxt);
 		setParameter("Start Amp (pA)", Istart);
-		setParameter("End Amp (pA)", Iend);
+		setParameter("Peak Amp (pA)", Iend);
 		setParameter("Cell (#)", cellnum);
 
-		setState("Time (s)", tcnt);
+		setState("Elapsed Time (s)", tcnt);
 		setState("Vin (mV)", Vstate);
 		setState("Iout (pA)", Istate);
 		break;
@@ -170,7 +170,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 	case MODIFY:
 		maxt   = getParameter("Time (s)").toDouble();
 		Istart = getParameter("Start Amp (pA)").toDouble();
-		Iend   = getParameter("End Amp (pA)").toDouble();
+		Iend   = getParameter("Peak Amp (pA)").toDouble();
 		cellnum = getParameter("Cell (#)").toInt();
 
 		//Reset ramp
