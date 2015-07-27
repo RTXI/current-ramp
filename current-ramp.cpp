@@ -86,11 +86,6 @@ static DefaultGUIModel::variable_t vars[] = {
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
 	},
 	{
-		"tcnt",
-		"Time (s)",
-		DefaultGUIModel::STATE,
-	},
-	{
 		"Vin (mV)",
 		"Voltage input (mV)",
 		DefaultGUIModel::STATE,
@@ -98,6 +93,11 @@ static DefaultGUIModel::variable_t vars[] = {
 	{
 		"Iout (pA)",
 		"Current injected during a ramp (pA)",
+		DefaultGUIModel::STATE,
+	},
+	{
+		"Time (s)",
+		"Time (s)",
 		DefaultGUIModel::STATE,
 	},
 };
@@ -162,7 +162,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		setParameter("End Amp (pA)", Iend);
 		setParameter("Cell (#)", cellnum);
 
-		setState("tcnt", tcnt);
+		setState("Time (s)", tcnt);
 		setState("Vin (mV)", Vstate);
 		setState("Iout (pA)", Istate);
 		break;
