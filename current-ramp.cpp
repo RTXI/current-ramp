@@ -178,7 +178,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		Istate = Iout;
 
 		peaked = 0;
-		rate = (Iend-Istart)/maxt/2; //In (pA/sec)
+		rate = (Iend-Istart)/(maxt/2); //In (pA/sec)
 		tcnt = 0;
 		
 		acquire = recordBox->isChecked();
