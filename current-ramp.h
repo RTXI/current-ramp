@@ -17,6 +17,7 @@
  */
 
 #include <default_gui_model.h>
+#include <data_recorder.h>
 #include <string>
 
 class Iramp : public DefaultGUIModel {
@@ -42,7 +43,7 @@ class Iramp : public DefaultGUIModel {
 		double dt;
 		double rate;
 		double maxt;
-		double Istart, Iend;
+		double Istart, Iend, Istate;
 
 		int active;
 		int peaked;

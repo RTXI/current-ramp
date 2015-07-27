@@ -18,6 +18,12 @@
 
 #include "current-ramp.h"
 
+/* 
+ * Yes, there aren't really any comments. Thank the BU person who made the
+ * module for that. 
+ *  - Ansel
+ */
+
 Iramp::ToggleRampEvent::ToggleRampEvent(Iramp *pt, bool rp, bool rd) {
 	parent = pt;
 	ramping = rp;
@@ -37,7 +43,6 @@ int Iramp::ToggleRampEvent::callback(void) {
 		parent->peaked = 0;
 		parent->done = false;
 	} else {
-//		parent->acquire = 1;
 		parent->active = 0;
 		parent->done = true;
 	}
@@ -51,47 +56,47 @@ extern "C" Plugin::Object *createRTXIPlugin(void) {
 static DefaultGUIModel::variable_t vars[] = {
 	{
 		"Vin",
-		"",
+		"Voltage input (V)",
 		DefaultGUIModel::INPUT,
 	},
 	{
 		"Iout",
-		"",
+		"Current output (A)",
 		DefaultGUIModel::OUTPUT,
 	},
 	{
 		"Start Amp (pA)",
-		"",
+		"Starting current for ramp (pA)",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
 	{
 		"End Amp (pA)",
-		"",
+		"Peak current for the ramp (pA)",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
 	{
 		"Time (s)",
-		"",
+		"Duration for ramp - ?",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
 	{
 		"Cell (#)",
-		"",
+		"Cell number, set at your convenience",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
 	},
 	{
 		"tcnt",
-		"",
+		"Time (s)",
 		DefaultGUIModel::STATE,
 	},
 	{
 		"V",
-		"",
+		"Voltage output",
 		DefaultGUIModel::STATE,
 	},
 	{
 		"Iout (pA)",
-		"",
+		"Current injected during a ramp (pA)",
 		DefaultGUIModel::STATE,
 	},
 };
@@ -101,7 +106,8 @@ static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 Iramp::Iramp(void) : DefaultGUIModel("Current Ramp",::vars,::num_vars), 
                      dt(RT::System::getInstance()->getPeriod()*1e-6), 
                      maxt(30.0), Istart(0.0), Iend(100.0), active(0), 
-                     acquire(0), cellnum(1), peaked(0), done(true) {
+                     acquire(0), cellnum(1), peaked(0), done(true), 
+                     Istate(0) {
 
 	DefaultGUIModel::createGUI(vars, num_vars);
 	update(INIT);
@@ -146,6 +152,7 @@ void Iramp::execute(void) {
 	}
 
 	output(0) = Iout*1e-12;
+	Istate = Iout;
 }
 
 void Iramp::update(DefaultGUIModel::update_flags_t flag) {
@@ -159,7 +166,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 
 		setState("tcnt", tcnt);
 		setState("V", V);
-		setState("Iout", Iout);
+		setState("Iout", Istate);
 		break;
 
 	case MODIFY:
@@ -170,6 +177,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 
 		//Reset ramp
 		Iout = Istart*active;
+		Istate = Iout;
 
 		peaked = 0;
 		rate = (Iend-Istart)/maxt/2; //In (pA/sec)
@@ -177,6 +185,11 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		
 		acquire = recordBox->isChecked();
 		active = rampButton->isChecked();
+		rampButton->setChecked(false);
+		if (acquire) {
+			DataRecorder::stopRecording();
+			acquire = 0;
+		}
 		break;
 
 	case PERIOD:
@@ -185,7 +198,14 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 
 	case PAUSE:
 		output(0) = 0.0;
+		rampButton->setChecked(false);
 		rampButton->setEnabled(false);
+		active = 0;
+		peaked = 0;
+		if (acquire) {
+			DataRecorder::stopRecording();
+			acquire = 0;
+		}
 		break;
 
 	case UNPAUSE:
@@ -209,19 +229,20 @@ void Iramp::customizeGUI(void) {
 	rampButton->setCheckable(true);
 	acquireBoxLayout->addWidget(rampButton);
 
-//	acquireBoxLayout->addSpacerItem(new QSpacerItem(0,0,QSizePolicy::Expanding, QSizePolicy::Minimum));
-
 	recordBox = new QCheckBox("Record Data");
 	acquireBoxLayout->addWidget(recordBox);
 
 	customLayout->addWidget(acquireBox, 0, 0);
 	setLayout(customLayout);
 
-	QObject::connect(recordBox, SIGNAL(clicked(void)), this, SLOT(modify(void)));
+	/* 
+	 * Use clicked() instead of toggled() because setChecked() emits the toggled 
+	 * signal, which will trigger whatever function the button is connected to. 
+	 */
 	QObject::connect(rampButton, SIGNAL(clicked(void)), this, SLOT(toggleRamp(void)));
 
 	rampCheckTimer = new QTimer(this);
-	QTimer::connect(rampCheckTimer, SIGNAL(timerout(void)), this, SLOT(rampTimerFunction(void)));
+	QTimer::connect(rampCheckTimer, SIGNAL(timeout(void)), this, SLOT(rampTimerFunction(void)));
 	rampCheckTimer->start(1000);
 }
 
@@ -231,19 +252,15 @@ void Iramp::toggleRamp(void) {
 }
 
 void Iramp::rampTimerFunction(void) {
-	if ( done && rampButton->isChecked() ) {
-		rampButton->disconnect();
-		rampButton->setChecked(false);
-		QObject::connect(rampButton, SIGNAL(clicked(void)), this, SLOT(toggleRamp(void)));
-	}
+	if ( done && rampButton->isChecked() ) rampButton->setChecked(false);
 }
 
 void Iramp::receiveEvent( const Event::Object *event ) {
-   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = true;
-   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = false;
+   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = 1;
+   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = 0;
 }
 
 void Iramp::receiveEventRT( const Event::Object *event ) {
-   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = true;
-   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = false;
+   if( event->getName() == Event::START_RECORDING_EVENT ) acquire = 1;
+   if( event->getName() == Event::STOP_RECORDING_EVENT ) acquire = 0;
 }
