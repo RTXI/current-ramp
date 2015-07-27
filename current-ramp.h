@@ -40,7 +40,8 @@ class Iramp : public DefaultGUIModel {
 		double dt;
 		double rate;
 		double maxt;
-		double Istart, Iend, Istate;
+		double Istart, Iend;
+		double Vstate, Istate;
 
 		int active;
 		int peaked;

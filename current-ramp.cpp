@@ -41,6 +41,7 @@ int Iramp::ToggleRampEvent::callback(void) {
 		}
 		parent->active = 1;
 		parent->peaked = 0;
+		parent->tcnt = 0;
 		parent->done = false;
 	} else {
 		parent->active = 0;
@@ -90,8 +91,8 @@ static DefaultGUIModel::variable_t vars[] = {
 		DefaultGUIModel::STATE,
 	},
 	{
-		"V",
-		"Voltage output",
+		"Vin (mV)",
+		"Voltage input (mV)",
 		DefaultGUIModel::STATE,
 	},
 	{
@@ -120,6 +121,7 @@ Iramp::~Iramp(void) {}
 
 void Iramp::execute(void) {
 	V = input(0);
+	Vstate = V * 1e3; // V to mV
 
 	if (active) {
 		if (!peaked) {
@@ -136,23 +138,19 @@ void Iramp::execute(void) {
 				Iout = 0;
 				active = 0;
 				peaked = 0;
+				done = true;
 			}
 		}
-	}
-
-	//Do data logging and data writing
-	if (acquire && active) {
 		tcnt+=dt/1000;
 	}
-	else if (acquire && !active) {
-		tcnt = 0;
-		acquire = 0;
+
+	if (acquire && !active) {
 		::Event::Object event(::Event::STOP_RECORDING_EVENT);
 		::Event::Manager::getInstance()->postEventRT(&event);
 	}
 
 	Istate = Iout;
-	output(0) = Iout*1e-12;
+	output(0) = Iout*1e-12; // nA -> A
 }
 
 void Iramp::update(DefaultGUIModel::update_flags_t flag) {
@@ -165,8 +163,8 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		setParameter("Cell (#)", cellnum);
 
 		setState("tcnt", tcnt);
-		setState("V", V);
-		setState("Iout", Istate);
+		setState("Vin (mV)", Vstate);
+		setState("Iout (pA)", Istate);
 		break;
 
 	case MODIFY:
