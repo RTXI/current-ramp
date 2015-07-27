@@ -17,7 +17,6 @@
  */
 
 #include <default_gui_model.h>
-//#include <DataLogger.cpp>
 #include <string>
 
 class Iramp : public DefaultGUIModel {
@@ -48,7 +47,6 @@ class Iramp : public DefaultGUIModel {
 		int active;
 		int peaked;
 		int acquire;
-//		bool active, peaked, acquire;
 		bool done;
 
 		QPushButton* rampButton;
@@ -56,11 +54,8 @@ class Iramp : public DefaultGUIModel {
 		QTimer* rampCheckTimer;
 
 		// DataLogger
-//		DataLogger data;
 		double tcnt;
 		int cellnum;
-//		string prefix, info;
-//		vector<double> newdata;
 
 		friend class ToggleRampEvent;
 		class ToggleRampEvent : public RT::Event {

@@ -74,23 +74,11 @@ static DefaultGUIModel::variable_t vars[] = {
 		"",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::DOUBLE,
 	},
-/*
-	{
-		"Active?",
-		"",
-		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
-	},
-	{
-		"Acquire?",
-		"",
-		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
-	},
 	{
 		"Cell (#)",
 		"",
 		DefaultGUIModel::PARAMETER | DefaultGUIModel::UINTEGER,
 	},
-*/
 	{
 		"tcnt",
 		"",
@@ -106,18 +94,6 @@ static DefaultGUIModel::variable_t vars[] = {
 		"",
 		DefaultGUIModel::STATE,
 	},
-/*
-	{
-		"File Prefix",
-		"",
-		DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
-	},
-	{
-		"File Info",
-		"",
-		DefaultGUIModel::COMMENT //| DefaultGUIModel::DOUBLE,
-	},
-*/
 };
 
 static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
@@ -125,16 +101,10 @@ static size_t num_vars = sizeof(vars)/sizeof(DefaultGUIModel::variable_t);
 Iramp::Iramp(void) : DefaultGUIModel("Current Ramp",::vars,::num_vars), 
                      dt(RT::System::getInstance()->getPeriod()*1e-6), 
                      maxt(30.0), Istart(0.0), Iend(100.0), active(0), 
-                     acquire(0), cellnum(1), peaked(0) {
-//                     acquire(0), cellnum(1), prefix("Iramp"), info("n/a") {
-
-//	newdata.push_back(0);
-//	newdata.push_back(0);
-//	newdata.push_back(0);
+                     acquire(0), cellnum(1), peaked(0), done(true) {
 
 	DefaultGUIModel::createGUI(vars, num_vars);
 	update(INIT);
-	done = true;
 	customizeGUI();
 	refresh();
 	QTimer::singleShot(0, this, SLOT(resizeMe()));
@@ -160,28 +130,17 @@ void Iramp::execute(void) {
 				Iout = 0;
 				active = 0;
 				peaked = 0;
-//				setParameter("Active?", active);
-//				refresh();
 			}
 		}
 	}
 
 	//Do data logging and data writing
 	if (acquire && active) {
-//		newdata[0] = tcnt;
-//		newdata[1] = V;
-//		newdata[2] = Iout*1e-12;
-//		data.insertdata(newdata);
 		tcnt+=dt/1000;
 	}
 	else if (acquire && !active) {
-//		data.writebuffer(prefix, info);
-//		data.resetbuffer();
 		tcnt = 0;
 		acquire = 0;
-//		setParameter("Acquire?", acquire);
-//		refresh();
-//		done = true;
 		::Event::Object event(::Event::STOP_RECORDING_EVENT);
 		::Event::Manager::getInstance()->postEventRT(&event);
 	}
@@ -196,12 +155,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		setParameter("Time (s)", maxt);
 		setParameter("Start Amp (pA)", Istart);
 		setParameter("End Amp (pA)", Iend);
-//		setParameter("Active?", active);
-
-//		setParameter("Acquire?", acquire);
-//		setParameter("Cell (#)", cellnum);
-//		setComment("File Prefix", QString::fromStdString(prefix));
-//		setComment("File Info", QString::fromStdString(info));
+		setParameter("Cell (#)", cellnum);
 
 		setState("tcnt", tcnt);
 		setState("V", V);
@@ -212,12 +166,7 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		maxt   = getParameter("Time (s)").toDouble();
 		Istart = getParameter("Start Amp (pA)").toDouble();
 		Iend   = getParameter("End Amp (pA)").toDouble();
-//		active = getParameter("Active?").toInt();
-
-//		acquire = getParameter("Acquire?").toInt();
-//		cellnum = getParameter("Cell (#)").toInt();
-//		prefix = getComment("File Prefix").toStdString();
-//		info = getComment("File Info").toStdString();
+		cellnum = getParameter("Cell (#)").toInt();
 
 		//Reset ramp
 		Iout = Istart*active;
@@ -228,9 +177,6 @@ void Iramp::update(DefaultGUIModel::update_flags_t flag) {
 		
 		acquire = recordBox->isChecked();
 		active = rampButton->isChecked();
-		//Reset data saving stuff
-//		data.newcell(cellnum);
-//		data.resetbuffer();
 		break;
 
 	case PERIOD:
@@ -280,7 +226,6 @@ void Iramp::customizeGUI(void) {
 }
 
 void Iramp::toggleRamp(void) {
-//	active = rampButton->isChecked();
 	ToggleRampEvent event(this, rampButton->isChecked(), recordBox->isChecked());
 	RT::System::getInstance()->postEvent( &event );
 }
