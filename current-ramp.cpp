@@ -108,7 +108,7 @@ Iramp::Iramp(void) : DefaultGUIModel("Current Ramp",::vars,::num_vars),
                      dt(RT::System::getInstance()->getPeriod()*1e-6), 
                      maxt(30.0), Istart(0.0), Iend(100.0), active(0), 
                      acquire(0), cellnum(1), peaked(0), done(true), 
-                     Istate(0) {
+                     Istate(0), Vstate(0), Iout(0), V(0) {
 
 	DefaultGUIModel::createGUI(vars, num_vars);
 	update(INIT);
